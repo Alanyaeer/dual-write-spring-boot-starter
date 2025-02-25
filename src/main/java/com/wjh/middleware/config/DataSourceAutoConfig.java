@@ -2,14 +2,19 @@ package com.wjh.middleware.config;
 
 
 import com.wjh.middleware.DBRouterConfig;
+import com.wjh.middleware.constants.DataSourceConstants;
 import com.wjh.middleware.dynamic.DynamicDataSource;
-import com.wjh.middleware.strategy.IDBRouterStrategy;
-import com.wjh.middleware.strategy.impl.DBRouterStrategyDualWrite;
+import com.wjh.middleware.properties.DataSourceProperties;
+import com.wjh.middleware.properties.IgniteDataSourceProperties;
+import com.wjh.middleware.properties.MysqlDataSourceProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -22,43 +27,66 @@ import java.util.Map;
 public class DataSourceAutoConfig {
     @Resource
     private DataSourceProperties dataSourceProperties;
-    /**
-     * 数据源配置组
-     */
-    private final Map<String, Map<String, Object>> dataSourceMap = new HashMap<>();
+    @Resource
+    private MysqlDataSourceProperties mysqlProperties;
+    @Resource
+    private IgniteDataSourceProperties igniteProperties;
+
 
     /**
      * 默认数据源配置
      */
-    private Map<String, Object> defaultDataSourceConfig;
+    private static final Map<Object, Object> defaultDataSourceConfig = new HashMap<>();
 
-    @Bean
+    @Bean(name = "mysqlDataSource")
+    public DataSource mysqlDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setUrl(mysqlProperties.getUrl());
+        dataSource.setUsername(mysqlProperties.getUsername());
+        dataSource.setPassword(mysqlProperties.getPassword());
+        dataSource.setDriverClassName(mysqlProperties.getDriverClassName());
+        return dataSource;
+    }
+
+    @Bean(name = "igniteDataSource")
+    public DataSource igniteDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setUrl(igniteProperties.getUrl());
+        dataSource.setUsername(igniteProperties.getUsername());
+        dataSource.setPassword(igniteProperties.getPassword());
+        dataSource.setDriverClassName(igniteProperties.getDriverClassName());
+        return dataSource;
+    }
+
+
+/*    @Bean
     public IDBRouterStrategy dbRouterStrategy() {
         return new DBRouterStrategyDualWrite();
-    }
+    }*/
     @Bean
     public DBRouterConfig dbRouterConfig() {
         return new DBRouterConfig(dataSourceProperties.getPersistenceDataSource());
     }
+
     @Bean
-    public DataSource dataSource() {
-        //创建数据源
-        Map<Object, Object> targetDataSources = new HashMap<>();
-        for (String dbInfo : dataSourceMap.keySet()) {
-            Map<String, Object> objectMap = dataSourceMap.get(dbInfo);
-            targetDataSources.put(dbInfo, new DriverManagerDataSource(objectMap.get("url").toString(),
-                    objectMap.get("username").toString(), objectMap.get("password").toString()));
-        }
-
-        //设置数据源
+    public DataSource dataSource(@Qualifier("mysqlDataSource") DataSource mysqlDataSource,
+                                 @Qualifier("igniteDataSource") DataSource igniteDataSource) {
         DynamicDataSource dynamicDataSource = new DynamicDataSource();
-        dynamicDataSource.setTargetDataSources(targetDataSources);
-        dynamicDataSource.setDefaultTargetDataSource(new DriverManagerDataSource(
-                defaultDataSourceConfig.get("url").toString(),
-                defaultDataSourceConfig.get("username").toString(),
-                defaultDataSourceConfig.get("password").toString()
-        ));
-
+        dynamicDataSource.setDefaultTargetDataSource(mysqlDataSource);
+        defaultDataSourceConfig.put(DataSourceConstants.MYSQL_DATA_SOURCE, mysqlDataSource);
+        defaultDataSourceConfig.put(DataSourceConstants.IGNITE_DATA_SOURCE, igniteDataSource);
+        dynamicDataSource.setTargetDataSources(defaultDataSourceConfig);
         return dynamicDataSource;
+    }
+
+    @Bean
+    public TransactionTemplate transactionTemplate(DataSource dataSource) {
+        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
+        dataSourceTransactionManager.setDataSource(dataSource);
+
+        TransactionTemplate transactionTemplate = new TransactionTemplate();
+        transactionTemplate.setTransactionManager(dataSourceTransactionManager);
+        transactionTemplate.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+        return transactionTemplate;
     }
 }
