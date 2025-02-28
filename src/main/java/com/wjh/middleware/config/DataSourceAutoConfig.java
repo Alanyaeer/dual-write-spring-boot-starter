@@ -7,7 +7,10 @@ import com.wjh.middleware.dynamic.DynamicDataSource;
 import com.wjh.middleware.properties.DataSourceProperties;
 import com.wjh.middleware.properties.IgniteDataSourceProperties;
 import com.wjh.middleware.properties.MysqlDataSourceProperties;
+import com.wjh.middleware.strategy.IDualWriteStrategy;
+import com.wjh.middleware.strategy.impl.DualWriteStrategySync;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -88,5 +91,10 @@ public class DataSourceAutoConfig {
         transactionTemplate.setTransactionManager(dataSourceTransactionManager);
         transactionTemplate.setPropagationBehaviorName("PROPAGATION_REQUIRED");
         return transactionTemplate;
+    }
+    @Bean
+    @ConditionalOnMissingBean
+    public IDualWriteStrategy dualWriteStrategy(){
+        return new DualWriteStrategySync();
     }
 }
