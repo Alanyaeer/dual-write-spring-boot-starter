@@ -1,1 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.wjh.middleware.config.DualWriteAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.wjh.middleware.config.DataSourceAutoConfig
