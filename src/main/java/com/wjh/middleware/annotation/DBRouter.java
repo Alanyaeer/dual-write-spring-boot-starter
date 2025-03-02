@@ -6,5 +6,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface DBRouter {
+
     boolean dualWrite() default false;
+    boolean queryMemDB() default false;
 }

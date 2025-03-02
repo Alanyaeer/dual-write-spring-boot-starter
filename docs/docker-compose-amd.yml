@@ -8,8 +8,8 @@ services:
     restart: always
     privileged: true
     volumes:
-      - D:/usr/local/rocketmq/nameserver/logs:/home/rocketmq/logs
-      - D:/usr/local/rocketmq/nameserver/bin/runserver.sh:/home/rocketmq/rocketmq-5.1.0/bin/runserver.sh
+      - ./rocketmq/nameserver/logs:/home/rocketmq/logs
+      - ./rocketmq/nameserver/bin/runserver.sh:/home/rocketmq/rocketmq-5.1.0/bin/runserver.sh
     environment:
       - MAX_HEAP_SIZE=256M
       - HEAP_NEWSIZE=128M
@@ -24,10 +24,10 @@ services:
     restart: always
     privileged: true
     volumes:
-      - D:/usr/local/rocketmq/broker/logs:/home/rocketmq/logs
-      - D:/usr/local/rocketmq/broker/store:/home/rocketmq/store
-      - D:/usr/local/rocketmq/broker/conf/broker.conf:/home/rocketmq/broker.conf
-      - D:/usr/local/rocketmq/broker/bin/runbroker.sh:/home/rocketmq/rocketmq-5.1.0/bin/runbroker.sh
+      - ./rocketmq/broker/logs:/home/rocketmq/logs
+      - ./rocketmq/broker/store:/home/rocketmq/store
+      - ./rocketmq/broker/conf/broker.conf:/home/rocketmq/broker.conf
+      - ./rocketmq/broker/bin/runbroker.sh:/home/rocketmq/rocketmq-5.1.0/bin/runbroker.sh
     depends_on:
       - 'rmqnamesrv'
     environment:
