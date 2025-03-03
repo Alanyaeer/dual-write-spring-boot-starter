@@ -56,7 +56,7 @@ public class DynamicMybatisPlugin implements Interceptor {
             }
             else if(methodName.equals("update")){
                 // 此处需要规避双写造成的重复问题 。。。
-                if(method.isAnnotationPresent(DBRouter.class) && (DBContextHolder.getDataSourceKey() == null || DBContextHolder.getDataSourceKey().equals(DataSourceConstants.IGNITE_DATA_SOURCE))){
+                if(method.isAnnotationPresent(DBRouter.class) && (DBContextHolder.getDataSourceKey() == null || !DBContextHolder.getDataSourceKey().equals(DataSourceConstants.IGNITE_DATA_SOURCE))){
                     DBRouter dbRouter = method.getAnnotation(DBRouter.class);
                     log.info("本次是否需要双写 {}", dbRouter.dualWrite());
                     if(dbRouter.dualWrite()){
